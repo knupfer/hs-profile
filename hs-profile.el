@@ -14,7 +14,7 @@
 	(result)
 	(total))
     (call-process "ghc" nil nil nil (concat dir file)
-		  "-prof" "-fprof-auto" "-fprof-cafs")
+		  "-O2" "-prof" "-fprof-auto" "-fprof-cafs")
     (call-process (concat dir file)
 		  nil nil nil "+RTS" "-p")
     (with-temp-buffer
