@@ -38,7 +38,10 @@
 			(number-to-string (round (/ (string-to-number secs) 60))) "m"
 			(number-to-string (round (mod (string-to-number secs) 60))))))
 	  (setq total (list secs kbs)))
-	(re-search-forward "\\(\\(?:^[a-z].*\n\\)+\\)") nil t)
+	(goto-char (point-min))
+	(while (re-search-forward "^[A-Z].*\n" nil t) (replace-match ""))
+	(goto-char (point-min))
+	(re-search-forward "\\(\\(?:^[a-z].*\n\\)+\\)" nil t))
       (setq result (split-string (match-string 1))))
     (remove-overlays nil nil 'category 'hs-profile-overlay)
     (save-excursion
@@ -46,7 +49,7 @@
 	(goto-char (point-min))
 	(when
 	    (if (< 1 (length (split-string (car result) "\\.")))
- 		(let ((fun (split-string (pop result) "\\.")))
+		(let ((fun (split-string (pop result) "\\.")))
 		  (re-search-forward (concat "^" (car fun) " ") nil t)
 		  (re-search-forward (concat "^\\( +\\| +where +\\| +let +\\)"
 					     (cadr fun) " ") nil t))
