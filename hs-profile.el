@@ -16,44 +16,47 @@
 				 "-O2" "-prof" "-fprof-auto" "-fprof-cafs")))
 	     (set-process-sentinel
 	      proc (lambda (proc str)
-		     (let ((proc2 (start-process "prof" nil (concat ,dir ,file) "+RTS" "-p")))
-		       (set-process-sentinel
-			proc2 (lambda (proc2 str)
-				(hs-profile-parse-file ,dir ,file
-						       ,(current-buffer)))))))))))
+		     (with-current-buffer ,(current-buffer)
+		       (let ((proc2 (start-process "prof" nil (concat ,dir ,file) "+RTS" "-p")))
+			 (set-process-sentinel
+			  proc2 (lambda (proc2 str)
+				  (hs-profile-parse-file ,dir ,file
+							 ,(current-buffer))))))))))))
 
 (defun hs-profile-parse-file (dir file buf)
-  (when (eq buf (current-buffer))
-    (let ((result)
-	  (total))
-      (with-temp-buffer
-	(insert-file-contents (concat dir file ".prof"))
-	(let ((case-fold-search nil))
-	  (re-search-forward
-	   "[ \t]+total time[^0-9]+\\([0-9.]+\\).*\n[ \t]+total alloc[^0-9]+\\([0-9,]+\\)" nil t)
-	  (let ((secs (match-string 1))
-		(kbs (match-string 2)))
-	    (setq kbs (split-string kbs ","))
-	    (when (= 2 (length (car kbs)))
-	      (setcar kbs (concat " " (car kbs))))
-	    (when (= 1 (length (car kbs)))
-	      (setcar kbs (concat (car kbs) "." (substring (cadr kbs) 0 1))))
-	    (setq kbs (concat (car kbs) (elt '("B" "KB" "MB" "GB" "TB")
-					     (- (length kbs) 1))))
-	    (when (>= (string-to-number secs) 10)
-	      (setq secs (number-to-string (/ (round (* 10 (string-to-number secs))) 10))))
-	    (when (>= (string-to-number secs) 100)
-	      (setq secs (concat
-			  (number-to-string (round (/ (string-to-number secs) 60))) "m"
-			  (number-to-string (round (mod (string-to-number secs) 60))))))
-	    (setq total (list secs kbs)))
-	  (goto-char (point-min))
-	  (while (re-search-forward "^[A-Z].*\n" nil t) (replace-match ""))
-	  (goto-char (point-min))
-	  (re-search-forward "\\(\\(?:^[a-z].*\n\\)+\\)" nil t))
-	(setq result (split-string (match-string 1))))
-      (remove-overlays nil nil 'category 'hs-profile-overlay)
-      (hs-profile-apply-overlays result total))))
+  (when (bufferp buf)
+    (with-current-buffer buf
+      (let ((result)
+	    (total))
+	(with-temp-buffer
+	  (insert-file-contents (concat dir file ".prof"))
+	  (let ((case-fold-search nil))
+	    (re-search-forward
+	     "[ \t]+total time[^0-9]+\\([0-9.]+\\).*\n[ \t]+total alloc[^0-9]+\\([0-9,]+\\)"
+	     nil t)
+	    (let ((secs (match-string 1))
+		  (kbs (match-string 2)))
+	      (setq kbs (split-string kbs ","))
+	      (when (= 2 (length (car kbs)))
+		(setcar kbs (concat " " (car kbs))))
+	      (when (= 1 (length (car kbs)))
+		(setcar kbs (concat (car kbs) "." (substring (cadr kbs) 0 1))))
+	      (setq kbs (concat (car kbs) (elt '("B" "KB" "MB" "GB" "TB")
+					       (- (length kbs) 1))))
+	      (when (>= (string-to-number secs) 10)
+		(setq secs (number-to-string (/ (round (* 10 (string-to-number secs))) 10))))
+	      (when (>= (string-to-number secs) 100)
+		(setq secs (concat
+			    (number-to-string (round (/ (string-to-number secs) 60))) "m"
+			    (number-to-string (round (mod (string-to-number secs) 60))))))
+	      (setq total (list secs kbs)))
+	    (goto-char (point-min))
+	    (while (re-search-forward "^[A-Z].*\n" nil t) (replace-match ""))
+	    (goto-char (point-min))
+	    (re-search-forward "\\(\\(?:^[a-z].*\n\\)+\\)" nil t))
+	  (setq result (split-string (match-string 1))))
+	(remove-overlays nil nil 'category 'hs-profile-overlay)
+	(hs-profile-apply-overlays result total)))))
 
 (defun hs-profile-apply-overlays (result total)
   (save-excursion
