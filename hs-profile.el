@@ -5,7 +5,7 @@
 
 (defun hs-profile ()
   (interactive)
-  (message buffer-file-name)
+  (remove-overlays nil nil 'category 'hs-profile-overlay)
   (call-process "ghc" nil nil nil hs-profile-file "-prof" "-fprof-auto" "-fprof-cafs")
   (call-process hs-profile-file-base
 		nil nil nil "+RTS" "-p")
@@ -13,9 +13,16 @@
     (insert-file-contents (concat hs-profile-file-base ".prof"))
     (let ((case-fold-search nil))
       (re-search-forward "\\(\\(?:^[a-z].*\n\\)+\\)"))
-    (setq hs-profile-result (match-string 1))
-    ))
-
+    (setq hs-profile-result (split-string (match-string 1))))
+  (goto-char (point-min))
+  (while (and hs-profile-result
+	      (re-search-forward (concat "^" (pop hs-profile-result) " ") nil t))
+    (end-of-line)
+    (pop hs-profile-result)
+    (let ((ov (make-overlay (point) (point))))
+      (overlay-put ov 'category 'hs-profile-overlay)
+      (overlay-put ov 'before-string (concat " " (pop hs-profile-result)
+					     " " (pop hs-profile-result))))))
 
 (provide 'hs-profile)
 
