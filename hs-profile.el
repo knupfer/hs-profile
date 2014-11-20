@@ -1,4 +1,56 @@
 ;;; Code:
+(defvar-local hs-profile-log nil)
+
+(defun hs-profile-plot (dir file)
+  (interactive)
+  (shell-command (concat "R -e \"data = read.table('"
+			 dir file ".prof.log'); "
+			 "options(scipen=9);"
+			 "x = rev(data[,1]);"
+			 "y = rev(data[,2]);"
+			 "b = 1:length(y);"
+			 "b = b^1.2;"
+			 "size = 'B';"
+			 "time = 's';"
+			 "if(max(y)>10000) {y = y/1000; size = 'KB'};"
+			 "if(max(y)>10000) {y = y/1000; size = 'MB'};"
+			 "if(max(y)>10000) {y = y/1000; size = 'GB'};"
+			 "if(max(y)>10000) {y = y/1000; size = 'TB'};"
+			 "if(max(x)>300) {x = x/60; time = 'min'};"
+			 "if(max(x)<1) {x = x*1000; time = 'ms'};"
+			 "png('" dir file ".prof.png', width=800, height=200, res=80);"
+			 "par(mar=c(2,5,2,5));"
+			 "par(bg = 'black', fg = 'black');"
+			 "if(max(x) > 0) {"
+			 "plot(b,x,col='red',type='l',log='y',xaxt='n',yaxt='n',xlab='',ylab='');"
+			 "} else {"
+			 "plot(b,x,col='red',type='l',xaxt='n',yaxt='n',xlab='',ylab='')};"
+			 "axis(2, col.axis='red',las=1);"
+			 "par(new = TRUE);"
+			 "plot(b,y,col='blue',type='l',log='y',xaxt='n',yaxt='n',xlab='',ylab='');"
+			 "axis(4, col.axis='blue',las=1);"
+			 "mtext(size, side=4, line=3, cex.lab=1,las=2, col='blue');"
+			 "mtext(time, side=2, line=3, cex.lab=1,las=2, col='red');"
+			 "dev.off()\" > /dev/null")))
+
+(defun hs-profile-insert-image (dir file)
+  (interactive)
+  (let ((img (create-image
+	      (concat dir file ".prof.png") 'imagemagick nil
+	      :width (car (window-text-pixel-size)))))
+    (image-flush img)
+    (put-image img (point-max))))
+
+(defun hs-profile-dump-log (dir file hslog)
+  (with-temp-buffer
+    (insert (format "%s" hslog))
+    (goto-char (point-min))
+    (while (re-search-forward "[,(]+" nil t)
+      (replace-match ""))
+    (goto-char (point-min))
+    (while (re-search-forward ") *" nil t)
+      (replace-match "\n"))
+    (write-file (concat dir file ".prof.log"))))
 
 (define-minor-mode hs-profile-mode ()
   :lighter " prof"
@@ -27,7 +79,8 @@
   (when (bufferp buf)
     (with-current-buffer buf
       (let ((result)
-	    (total))
+	    (total)
+	    (hslog hs-profile-log))
 	(with-temp-buffer
 	  (insert-file-contents (concat dir file ".prof"))
 	  (let ((case-fold-search nil))
@@ -36,6 +89,8 @@
 	     nil t)
 	    (let ((secs (match-string 1))
 		  (kbs (match-string 2)))
+	      (add-to-list 'hslog (list secs kbs) nil (lambda (x y) nil))
+	      (hs-profile-dump-log dir file hslog)
 	      (setq kbs (split-string kbs ","))
 	      (when (= 2 (length (car kbs)))
 		(setcar kbs (concat " " (car kbs))))
@@ -55,7 +110,10 @@
 	    (goto-char (point-min))
 	    (re-search-forward "\\(\\(?:^[a-z].*\n\\)+\\)" nil t))
 	  (setq result (split-string (match-string 1))))
-	(remove-overlays nil nil 'category 'hs-profile-overlay)
+	(setq hs-profile-log hslog)
+	(remove-overlays)
+	(hs-profile-plot dir file)
+	(hs-profile-insert-image dir file)
 	(hs-profile-apply-overlays result total)))))
 
 (defun hs-profile-apply-overlays (result total)
