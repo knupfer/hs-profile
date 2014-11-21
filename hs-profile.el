@@ -1,3 +1,37 @@
+;;; hs-profile.el --- profile haskell code in the buffer
+
+;; Copyright (C) 2014 Florian Knupfer
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+
+;; Author: Florian Knupfer
+;; email: (rot13 "sxahcsre@tznvy.pbz")
+
+;;; Commentary:
+
+;; This mode provides profiling on every save of the target haskell
+;; buffer.  The profiling will be visualized by highlighting the cpu
+;; and ram intensive subexpressions, showing the percent of used
+;; ressources beside the top level function and plotting a history of
+;; used ressources between different versions of the buffer.
+;;
+;; Note that this mode requires the haskell package visual-prof for
+;; highlighting subexpressions, GNU R for generating plots and all
+;; haskell modules must be installed with profiling.  GNU R and
+;; visual-prof must be in path.
+
 ;;; Code:
 (defvar-local hs-profile-log nil)
 (defvar hs-scc-list nil)
