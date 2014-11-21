@@ -92,6 +92,7 @@
   :lighter " prof"
   :global nil
   (if hs-profile-mode
+      (hs-profile)
       (add-hook 'after-save-hook 'hs-profile nil t)
     (remove-hook 'after-save-hook 'hs-profile t)))
 
