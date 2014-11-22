@@ -29,3 +29,6 @@ line argument.  Processes won't get killed, so if you write something
 which takes a lot time to run, it will run until it terminates or you
 kill it.  For retrieving profiling data, your code must be executed,
 so be aware when you use this with code which operates a lot with IO.
+* Contribution
+You're warmly encouraged to report issues, feature requests and style
+improvements.  I'm learning and enjoy to hear any hint on making stuff better.
