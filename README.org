@@ -1,0 +1,31 @@
+* Overview
+
+This mode profiles on every save the current haskell buffer.
+
+Results will be displayed directly as overlays in the buffer.
+
+https://imgur.com/5NFlGWf.png
+
+* Usage
+
+Put this file into your load path and put in your .emacs (require
+'hs-profile).  Run hs-profile-run to make a one time profile or run
+hs-profile-mode to automatically reprofile on every save.
+
+Profiling is done asynchronously, so don't worry about blocking emacs.
+
+* Dependencies
+
+It requires
+- visual-prof from hackage
+- GNU R (for plots)
+
+Furthermore, used modules must be installed with profiling enabled.
+
+* Shortcomings
+
+At least for now, only executable work which don't need any command
+line argument.  Processes won't get killed, so if you write something
+which takes a lot time to run, it will run until it terminates or you
+kill it.  For retrieving profiling data, your code must be executed,
+so be aware when you use this with code which operates a lot with IO.
