@@ -93,11 +93,11 @@
   :global nil
   (if hs-profile-mode
       (progn
-	(add-hook 'after-save-hook 'hs-profile nil t)
-	(hs-profile))
-    (remove-hook 'after-save-hook 'hs-profile t)))
+	(add-hook 'after-save-hook 'hs-profile-run nil t)
+	(hs-profile-run))
+    (remove-hook 'after-save-hook 'hs-profile-run t)))
 
-(defun hs-profile ()
+(defun hs-profile-run ()
   (interactive)
   (let ((file (file-name-base))
 	(dir (file-name-directory (buffer-file-name))))
